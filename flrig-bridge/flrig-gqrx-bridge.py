@@ -1,7 +1,29 @@
 #!/usr/bin/env python3
 """
+Universal FlRig Bridge for Xiegu G90
+Enables panadapter operation and fixes Hamlib CAT issues
+
+Author:   Dale Weber/N7PKT <dalew@n7pkt.org>
+Created:  October, 2025
+License:  MIT
+Developed with assistance from Anthropic's Claude AI
+
+This bridge provides:
+- rigctld-compatible server for any Hamlib compatible software
+- Bidirectional sync with GQRX
+- Reliable CAT control via FlRig (bypasses buggy Hamlib G90 driver)
+"""
+```
+MIT License
+
+Copyright (c) 2025 Dale Weber
+
+Permission is hereby granted, free of charge, to any person obtaining a copy...
+```
+
+"""
 Bidirectional bridge between GQRX and FlRig
-- Connects to GQRX's remote control (port 7356)
+- Connects to GQRX's remote control (port 4532)
 - Connects to FlRig's XML-RPC (port 12345)
 - Syncs frequency changes both ways
 """
