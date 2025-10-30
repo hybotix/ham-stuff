@@ -5,7 +5,7 @@
 cd $L_SCRIPT_DIR
 
 # Start FlRig first
-flrig &
+flrig  --config-dir ~/.flrig/g90-sdr &
 sleep 3
 
 # Start GQRX. GQRX must have remote control set TRUE and set to connect to
