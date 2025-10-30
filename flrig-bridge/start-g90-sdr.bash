@@ -1,15 +1,19 @@
 #!/bin/bash
 
-# Move into the script directory
-cd $L_SCRIPT_DIR
+# Start G90 SDR Panadapter Setup
+# - FlRig for rig control
+# - GQRX for waterfall display
+# - Bridge for synchronization
 
-# Start FlRig first
-flrig &
-sleep 2
+cd ~
+
+# Start FlRig with G90-SDR config
+flrig --config-dir ~/.flrig/g90-sdr --xmlrpc-server-port 12345 &
+sleep 3
 
 # Start GQRX
 gqrx &
-sleep 2
+sleep 3
 
-# Start the bridge
+# Start GQRX bridge (foreground - see output)
 ./flrig-gqrx-bridge.py
