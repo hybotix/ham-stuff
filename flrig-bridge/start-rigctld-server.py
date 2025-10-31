@@ -14,6 +14,7 @@ import argparse
 from pathlib import Path
 import shutil
 import socket
+from config import find_script, get_flrig_config_dir
 
 def check_command_exists(command):
     """Check if a command exists in PATH"""
