@@ -388,6 +388,12 @@ Potential improvements (contributions welcome!):
 - Support for more rigctld commands
 - Logging and diagnostics modes
 
+## Support This Project
+
+If you find this project useful and it helps with your ham radio setup, please consider sponsoring my work! Your support helps me afford parts, tools, and learning resources to keep creating and sharing open-source projects.
+
+**GitHub Sponsors:** (Pending approval - coming soon!)
+
 ## Contributing
 
 Contributions are welcome! Please feel free to submit issues or pull requests.
