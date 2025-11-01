@@ -14,6 +14,7 @@ import subprocess
 import time
 import shutil
 from pathlib import Path
+from config import find_script, get_flrig_config_dir
 
 def check_command_exists(command):
     """Check if a command exists in PATH"""
@@ -110,7 +111,7 @@ def main():
         return 1
 
     # Check FlRig config directory
-    config_dir = home_path / ".flrig" / "g90-sdr"
+    config_dir = get_flrig_config_dir("g90-sdr")
     if not check_directory_exists(config_dir, "FlRig config directory"):
         return 1
 
@@ -126,7 +127,19 @@ def main():
         print(f"         FlRig will need to be configured for the G90", file=sys.stderr)
 
     # Check bridge script
-    bridge_script = home_path / "flrig-gqrx-bridge.py"
+    bridge_script = find_script("flrig-gqrx-bridge.py")
+    if not bridge_script:
+        print("Error: flrig-gqrx-bridge.py not found in any search location", file=sys.stderr)
+        print("       Searched:", file=sys.stderr)
+        print("         - $L_SCRIPT_DIR (if set)", file=sys.stderr)
+        print("         - ~/.local/scripts", file=sys.stderr)
+        print("         - ~/.local/bin", file=sys.stderr)
+        print("         - ~/bin", file=sys.stderr)
+        print("         - $PATH", file=sys.stderr)
+        print("         - ~ (home directory)", file=sys.stderr)
+        print("       Install script or set L_SCRIPT_DIR environment variable", file=sys.stderr)
+        return 1
+
     if not check_file_exists(bridge_script, "GQRX bridge script"):
         return 1
 

@@ -160,7 +160,7 @@ Example:
             return 1
 
     # Check FlRig config directory
-    config_dir = home_path / ".flrig" / args.config
+    config_dir = get_flrig_config_dir(args.config)
     if not check_directory_exists(config_dir, f"FlRig config directory '{args.config}'"):
         return 1
 
@@ -176,11 +176,21 @@ Example:
         print(f"         FlRig will need to be configured for the G90", file=sys.stderr)
 
     # Check bridge scripts
-    gqrx_bridge = home_path / "flrig-gqrx-bridge.py"
+    gqrx_bridge = find_script("flrig-gqrx-bridge.py")
+    if not gqrx_bridge:
+        print("Error: flrig-gqrx-bridge.py not found in any search location", file=sys.stderr)
+        print("       Searched $L_SCRIPT_DIR, ~/.local/scripts, $PATH, etc.", file=sys.stderr)
+        return 1
+
     if not check_file_exists(gqrx_bridge, "GQRX bridge script"):
         return 1
 
-    rigctld_server = home_path / "flrig-rigctld-server.py"
+    rigctld_server = find_script("flrig-rigctld-server.py")
+    if not rigctld_server:
+        print("Error: flrig-rigctld-server.py not found in any search location", file=sys.stderr)
+        print("       Searched $L_SCRIPT_DIR, ~/.local/scripts, $PATH, etc.", file=sys.stderr)
+        return 1
+
     if not check_file_exists(rigctld_server, "rigctld server script"):
         return 1
 
