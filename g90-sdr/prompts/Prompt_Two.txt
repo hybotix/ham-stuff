@@ -1,0 +1,6 @@
+My thoughts exactly! I have freedom to test in a most likely unstable environment, and still keep a stable, and hopefully working,
+G90 SDR environment.
+
+When I run g90-sdr without any parameters, it does not find my current G90-SDR environment even though it shows the current path in the
+error message. Also, it does not tell me *where* in the script (as in line number) that it occured. $G90_SDR_DIR should *always* point
+to the current G90-SDR installation, and it does on my system.

@@ -1,0 +1,99 @@
+#!/bin/bash
+# Filename: g90-flrig
+# Universal launcher wrapper for FlRig with G90 configuration
+# Install to: /usr/local/bin/g90-flrig
+
+VERSION="1.0.0"
+
+# Function to find G90-SDR installation
+find_installation() {
+    # Priority 1: G90_SDR_DIR (canonical production)
+    if [ -n "$G90_SDR_DIR" ] && [ -d "$G90_SDR_DIR" ] && [ -f "$G90_SDR_DIR/config/flrig_g90.xml" ]; then
+        echo "$G90_SDR_DIR"
+        return 0
+    fi
+
+    # Priority 2: L_SDR_DIR (active/testing)
+    if [ -n "$L_SDR_DIR" ] && [ -d "$L_SDR_DIR" ] && [ -f "$L_SDR_DIR/config/flrig_g90.xml" ]; then
+        echo "$L_SDR_DIR"
+        return 0
+    fi
+
+    local LOCATIONS=(
+        "$HOME/Virtual/G90-SDR"
+        "$HOME/G90-SDR"
+        "$HOME/Documents/G90-SDR"
+        "/opt/G90-SDR"
+    )
+
+    for location in "${LOCATIONS[@]}"; do
+        if [ -d "$location" ] && [ -f "$location/config/flrig_g90.xml" ]; then
+            echo "$location"
+            return 0
+        fi
+    done
+
+    return 1
+}
+
+# Function to show error
+show_error() {
+    local message="$1"
+    if command -v zenity &> /dev/null; then
+        zenity --error --title="FlRig G90 Error" --text="$message" --width=400
+    else
+        echo "ERROR: $message" >&2
+    fi
+}
+
+# Main
+main() {
+    # Check if FlRig is installed
+    if ! command -v flrig &> /dev/null; then
+        show_error "FlRig is not installed!\n\nInstall with:\nsudo apt install flrig\nor compile from source."
+        exit 1
+    fi
+
+    # Find G90-SDR installation
+    SDR_DIR=$(find_installation)
+
+    if [ -z "$SDR_DIR" ]; then
+        # No config found, launch FlRig without config
+        echo "Warning: G90-SDR config not found, launching FlRig with defaults"
+        exec flrig "$@"
+    fi
+
+    # Config file path
+    CONFIG_FILE="$SDR_DIR/config/flrig_g90.xml"
+
+    # Check if config exists
+    if [ ! -f "$CONFIG_FILE" ]; then
+        echo "Warning: Config file not found at $CONFIG_FILE"
+        exec flrig "$@"
+    fi
+
+    # Launch FlRig with G90 configuration
+    exec flrig --rig-file="$CONFIG_FILE" --xml-enable --auto-connect "$@"
+}
+
+# Handle arguments
+case "${1:-}" in
+    --version|-v)
+        echo "FlRig G90 Launcher v$VERSION"
+        flrig --version 2>&1 | head -1
+        exit 0
+        ;;
+    --help|-h)
+        echo "FlRig G90 Launcher v$VERSION"
+        echo ""
+        echo "Automatically launches FlRig with G90 configuration"
+        echo ""
+        echo "Usage: g90-flrig [FLRIG_OPTIONS]"
+        echo ""
+        echo "Any additional options are passed to FlRig"
+        exit 0
+        ;;
+    *)
+        main "$@"
+        ;;
+esac

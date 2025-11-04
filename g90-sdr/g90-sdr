@@ -1,0 +1,276 @@
+#!/bin/bash
+# Filename: g90-sdr
+# Universal launcher wrapper for G90-SDR System
+# Install to: /usr/local/bin/g90-sdr
+#
+# This script auto-detects the G90-SDR installation location
+# and launches the system properly from any desktop environment.
+
+VERSION="1.0.0"
+
+# Function to find G90-SDR installation
+find_installation() {
+    # Priority 1: G90_SDR_DIR (canonical production location)
+    if [ -n "$G90_SDR_DIR" ] && [ -d "$G90_SDR_DIR" ] && [ -f "$G90_SDR_DIR/scripts/start_sdr.py" ]; then
+        echo "$G90_SDR_DIR"
+        return 0
+    fi
+
+    # Priority 2: L_SDR_DIR (active/testing location)
+    if [ -n "$L_SDR_DIR" ] && [ -d "$L_SDR_DIR" ] && [ -f "$L_SDR_DIR/scripts/start_sdr.py" ]; then
+        echo "$L_SDR_DIR"
+        return 0
+    fi
+
+    # Priority 3: Common user locations
+    local USER_LOCATIONS=(
+        "$HOME/Virtual/G90-SDR"
+        "$HOME/G90-SDR"
+        "$HOME/Documents/G90-SDR"
+        "$HOME/.local/share/G90-SDR"
+    )
+
+    for location in "${USER_LOCATIONS[@]}"; do
+        if [ -d "$location" ] && [ -f "$location/scripts/start_sdr.py" ]; then
+            echo "$location"
+            return 0
+        fi
+    done
+
+    # Priority 4: System-wide installation
+    local SYSTEM_LOCATIONS=(
+        "/opt/G90-SDR"
+        "/usr/local/share/G90-SDR"
+    )
+
+    for location in "${SYSTEM_LOCATIONS[@]}"; do
+        if [ -d "$location" ] && [ -f "$location/scripts/start_sdr.py" ]; then
+            echo "$location"
+            return 0
+        fi
+    done
+
+    # Not found
+    return 1
+}
+
+# Function to show error with GUI if available
+show_error() {
+    local message="$1"
+
+    # Try different dialog tools (in order of preference)
+    if command -v zenity &> /dev/null; then
+        zenity --error --title="G90-SDR Error" --text="$message" --width=400
+    elif command -v kdialog &> /dev/null; then
+        kdialog --error "$message" --title "G90-SDR Error"
+    elif command -v notify-send &> /dev/null; then
+        notify-send "G90-SDR Error" "$message" -u critical -i dialog-error
+    elif command -v xmessage &> /dev/null; then
+        xmessage -center "G90-SDR Error: $message"
+    else
+        # Fallback to terminal
+        echo "ERROR: $message" >&2
+    fi
+}
+
+# Function to show info message
+show_info() {
+    local message="$1"
+
+    if command -v notify-send &> /dev/null; then
+        notify-send "G90-SDR" "$message" -i radio
+    fi
+}
+
+# Main execution
+main() {
+    # Find installation
+    SDR_DIR=$(find_installation)
+
+    if [ -z "$SDR_DIR" ]; then
+        show_error "G90-SDR installation not found!
+
+Searched locations:
+• \$L_SDR_DIR environment variable
+• \$HOME/Virtual/G90-SDR
+• \$HOME/G90-SDR
+• \$HOME/Documents/G90-SDR
+• /opt/G90-SDR
+
+Please install G90-SDR or set L_SDR_DIR in ~/.bashrc:
+export L_SDR_DIR=\$HOME/path/to/G90-SDR"
+        exit 1
+    fi
+
+    # Verify critical files exist
+    if [ ! -f "$SDR_DIR/scripts/start_sdr.py" ]; then
+        show_error "Invalid G90-SDR installation at:
+$SDR_DIR
+
+Missing: scripts/start_sdr.py
+
+Please reinstall G90-SDR."
+        exit 1
+    fi
+
+    # Check for virtual environment
+    if [ ! -d "$SDR_DIR/venv" ]; then
+        show_error "Python virtual environment not found!
+
+Installation path: $SDR_DIR
+
+Please run installation:
+cd $SDR_DIR
+bash install.bash"
+        exit 1
+    fi
+
+    # Change to installation directory
+    cd "$SDR_DIR" || {
+        show_error "Could not change to directory: $SDR_DIR"
+        exit 1
+    }
+
+    # Activate virtual environment
+    source venv/bin/activate || {
+        show_error "Could not activate virtual environment!
+
+Path: $SDR_DIR/venv
+
+Try recreating it:
+cd $SDR_DIR
+rm -rf venv
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt"
+        exit 1
+    }
+
+    # Show startup notification (non-blocking)
+    show_info "Starting G90-SDR System...
+
+Location: $SDR_DIR" &
+
+    # Launch the system
+    python3 scripts/start_sdr.py
+
+    # Capture exit code
+    exit_code=$?
+
+    # Deactivate virtual environment
+    deactivate 2>/dev/null || true
+
+    exit $exit_code
+}
+
+# Handle command line arguments
+case "${1:-}" in
+    --version|-v)
+        echo "G90-SDR Universal Launcher v$VERSION"
+        exit 0
+        ;;
+    --help|-h)
+        cat << 'HELP_EOF'
+G90-SDR Universal Launcher
+
+Usage: g90-sdr [OPTIONS]
+
+Options:
+  --version, -v    Show version information
+  --help, -h       Show this help message
+  --find           Show installation location
+  --test           Test installation without starting
+
+Description:
+  Universal launcher for G90-SDR that automatically detects
+  the installation location and starts the complete SDR system
+  (FlRig + GQRX + frequency synchronization).
+
+Installation Detection (checked in order):
+  1. $L_SDR_DIR environment variable
+  2. $HOME/Virtual/G90-SDR
+  3. $HOME/G90-SDR
+  4. $HOME/Documents/G90-SDR
+  5. /opt/G90-SDR
+  6. /usr/local/share/G90-SDR
+
+Environment Variables:
+  L_SDR_DIR        Override installation location
+                   Example: export L_SDR_DIR=$HOME/Virtual/G90-SDR
+
+Examples:
+  g90-sdr          Start the SDR system
+  g90-sdr --find   Show where G90-SDR is installed
+  g90-sdr --test   Verify installation is valid
+
+Project: https://github.com/YOUR_USERNAME/G90-SDR
+License: MIT
+HELP_EOF
+        exit 0
+        ;;
+    --find)
+        SDR_DIR=$(find_installation)
+        if [ -n "$SDR_DIR" ]; then
+            echo "G90-SDR installation found at:"
+            echo "  $SDR_DIR"
+            echo ""
+            echo "Contents:"
+            ls -la "$SDR_DIR" | head -10
+            exit 0
+        else
+            echo "G90-SDR installation not found"
+            echo ""
+            echo "Searched locations:"
+            echo "  \$L_SDR_DIR (currently: ${L_SDR_DIR:-not set})"
+            echo "  $HOME/Virtual/G90-SDR"
+            echo "  $HOME/G90-SDR"
+            echo "  $HOME/Documents/G90-SDR"
+            echo "  /opt/G90-SDR"
+            exit 1
+        fi
+        ;;
+    --test)
+        echo "Testing G90-SDR installation..."
+        SDR_DIR=$(find_installation)
+        if [ -z "$SDR_DIR" ]; then
+            echo "✗ Installation not found"
+            exit 1
+        fi
+        echo "✓ Found at: $SDR_DIR"
+
+        # Check critical files
+        if [ -f "$SDR_DIR/scripts/start_sdr.py" ]; then
+            echo "✓ start_sdr.py exists"
+        else
+            echo "✗ start_sdr.py missing"
+            exit 1
+        fi
+
+        if [ -d "$SDR_DIR/venv" ]; then
+            echo "✓ Virtual environment exists"
+        else
+            echo "✗ Virtual environment missing"
+            exit 1
+        fi
+
+        if [ -f "$SDR_DIR/requirements.txt" ]; then
+            echo "✓ requirements.txt exists"
+        else
+            echo "✗ requirements.txt missing"
+            exit 1
+        fi
+
+        echo ""
+        echo "✓ Installation appears valid"
+        exit 0
+        ;;
+    "")
+        # No arguments, run normally
+        main
+        ;;
+    *)
+        echo "Unknown option: $1"
+        echo "Use 'g90-sdr --help' for usage information"
+        exit 1
+        ;;
+esac

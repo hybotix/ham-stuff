@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=FlRig for G90
+GenericName=Rig Control
+Comment=FlRig CAT Control for Xiegu G90 (Auto-configured)
+Icon=flrig
+Exec=g90-flrig
+Terminal=false
+Categories=HamRadio;Network;AudioVideo;
+Keywords=ham;radio;rig;control;CAT;transceiver;g90;xiegu;
+StartupNotify=true

@@ -1,0 +1,16 @@
+Project name: G90 SDR
+Standards:
+Top Directory: GDR-SDR
+All code must run with Python v3.13
+All code or file artifacts must have a filename associated with it in a comment at the top.
+Underscores are used to separate words.
+Test and Diagnostic scripts start with capital letters.
+There must be a requirements.txt file for all Python dependencies.
+There must be a README.md file that specifies all details.
+There will be INSTALL.md that specifies all installation procedures.
+I must be able to easily access artifacts in these chats if I need to get files or code again.
+All Python code must be ready to execute as scripts.
+Hardware:
+Xiegu G90 HF Radio
+Xiegu DE-19 Data Interface Expansion Adapter
+Purpose: Turn my G90 into a real SDR. FlRig will be used for all rig control.
